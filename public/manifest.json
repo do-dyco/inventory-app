@@ -1,0 +1,25 @@
+{
+    "name": "Inventory App - Sistem Manajemen Gudang",
+    "short_name": "Inventory App",
+    "description": "Sistem manajemen stok & gudang berbasis Laravel Inertia + TailAdmin",
+    "start_url": "/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#1c2434",
+    "theme_color": "#465fff",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
