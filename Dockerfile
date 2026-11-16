@@ -1,8 +1,12 @@
-FROM composer:2 AS build
+FROM php:8.4-cli AS build
 WORKDIR /app
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libonig-dev zip unzip git curl \
+    && docker-php-ext-install mbstring pdo_mysql \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 RUN npm ci && npm run build
