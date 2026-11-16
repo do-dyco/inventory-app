@@ -1,14 +1,11 @@
-FROM node:22-slim AS assets
+FROM composer:2 AS build
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM composer:2 AS vendor
-WORKDIR /app
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
 COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+RUN npm ci && npm run build
 
 FROM php:8.4-apache
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
@@ -22,8 +19,8 @@ RUN apt-get update \
 
 # Keep Apache pointed at Laravel's public document root.
 WORKDIR /var/www/html
-COPY --from=vendor /app/vendor/ vendor/
-COPY --from=assets /app/public/build/ public/build/
+COPY --from=build /app/vendor/ vendor/
+COPY --from=build /app/public/build/ public/build/
 COPY . .
 # Fail build early if required extensions are missing from the base image.
 RUN php -m | grep -qi pdo_mysql && php -m | grep -qi mbstring
