@@ -27,6 +27,12 @@ self.addEventListener('fetch', (e) => {
     const { request } = e;
     if (request.method !== 'GET') return;
 
+    // Authenticated page data must never be served from a stale cache.
+    if (request.headers.has('X-Inertia')) {
+        e.respondWith(fetch(request));
+        return;
+    }
+
     // Network-first for navigations & API
     if (request.mode === 'navigate' || request.url.includes('/api/')) {
         e.respondWith(

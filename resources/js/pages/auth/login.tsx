@@ -82,7 +82,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full rounded-xl bg-[#465fff] text-white shadow-lg shadow-[#465fff]/25 hover:bg-[#3b50e0]"
+                                className="mt-4 w-full rounded-xl bg-brand-500 text-white shadow-lg shadow-[#465fff]/25 hover:bg-brand-600"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
@@ -92,12 +92,12 @@ export default function Login({ status, canResetPassword }: Props) {
                             </Button>
                         </div>
 
-                        <div className="text-center text-sm text-slate-500 dark:text-slate-400">
+                        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
                             Belum punya akun?{' '}
                             <TextLink
                                 href={register()}
                                 tabIndex={5}
-                                className="text-[#465fff] hover:text-[#3b50e0]"
+                                className="text-brand-500 hover:text-[#3b50e0]"
                             >
                                 Daftar
                             </TextLink>

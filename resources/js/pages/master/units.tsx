@@ -63,11 +63,7 @@ export default function Units({ units }: Props) {
     }
 
     function toggleActive(u: Unit) {
-        router.put(
-            `/units/${u.id}`,
-            { is_active: !u.is_active },
-            { preserveScroll: true },
-        );
+        router.patch(`/units/${u.id}/toggle`, {}, { preserveScroll: true });
     }
 
     return (
@@ -76,25 +72,25 @@ export default function Units({ units }: Props) {
             <div className="mx-auto w-full max-w-[1536px] space-y-6 p-4 md:p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+                        <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
                             Satuan
                         </h1>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                             Kelola satuan barang.
                         </p>
                     </div>
                     <Button
                         onClick={openAdd}
-                        className="bg-[#465fff] text-white hover:bg-[#3b50e0]"
+                        className="bg-brand-500 text-white hover:bg-brand-600"
                     >
                         <Plus className="size-4" /> Tambah
                     </Button>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#1c2434]">
+                <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 text-xs text-slate-500 uppercase dark:bg-white/[0.03]">
+                            <thead className="bg-gray-50 text-xs text-gray-500 uppercase dark:bg-gray-800">
                                 <tr>
                                     {[
                                         'Kode',
@@ -113,15 +109,15 @@ export default function Units({ units }: Props) {
                                 {units.map((u) => (
                                     <tr
                                         key={u.id}
-                                        className="border-t border-slate-100 dark:border-white/[0.06]"
+                                        className="border-t border-gray-100 dark:border-gray-800"
                                     >
-                                        <td className="px-5 py-4 font-medium text-slate-900 dark:text-white">
+                                        <td className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">
                                             {u.code}
                                         </td>
-                                        <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400">
                                             {u.name}
                                         </td>
-                                        <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400">
                                             {u.symbol}
                                         </td>
                                         <td className="px-5 py-4">
@@ -222,7 +218,7 @@ export default function Units({ units }: Props) {
                             </Button>
                             <Button
                                 type="submit"
-                                className="bg-[#465fff] text-white hover:bg-[#3b50e0]"
+                                className="bg-brand-500 text-white hover:bg-brand-600"
                             >
                                 Simpan
                             </Button>

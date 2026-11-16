@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = User::latest()->paginate(15);
+        $users = User::with('branch')->latest()->paginate(15);
+        $branches = Branch::where('is_active', true)->get();
 
-        return \Inertia\Inertia::render('master/users', ['users' => $users]);
+        return Inertia::render('master/users', ['users' => $users, 'branches' => $branches]);
     }
 
     public function store(Request $request)
@@ -21,6 +24,7 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
             'role' => ['required', 'in:superadmin,user'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'is_active' => ['boolean'],
         ]);
 
@@ -35,6 +39,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'role' => ['required', 'in:superadmin,user'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'is_active' => ['boolean'],
         ]);
 

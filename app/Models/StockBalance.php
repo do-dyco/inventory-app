@@ -21,7 +21,12 @@ class StockBalance extends Model
     public function adjust(int $delta): void
     {
         DB::transaction(function () use ($delta) {
-            $this->lockForUpdate()->findOrFail($this->id);
+            $balance = static::whereKey($this->id)->lockForUpdate()->firstOrFail();
+            if ($balance->quantity + $delta < 0) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'quantity' => "Stok {$balance->product->name} tidak mencukupi. Tersedia {$balance->quantity}, diminta " . abs($delta) . '. Pengajuan tidak disimpan.',
+                ]);
+            }
             $this->increment('quantity', $delta);
             $this->refresh();
         });

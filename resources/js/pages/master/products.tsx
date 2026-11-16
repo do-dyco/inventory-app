@@ -1,4 +1,6 @@
 import { Head, router } from '@inertiajs/react';
+import { fmtNum } from '@/components/report-filters';
+import { NumberInput } from "@/components/ui/number-input";
 import { Pencil, Plus, Power } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -27,9 +29,7 @@ type Product = {
     sku: string;
     name: string;
     unit: Unit | null;
-    stock_balance: number;
-    purchase_price: number;
-    selling_price: number;
+    stock_balance: { quantity: number } | null;
     minimum_stock: number;
     is_active: boolean;
 };
@@ -40,8 +40,6 @@ const empty = {
     sku: '',
     name: '',
     unit_id: '',
-    purchase_price: '',
-    selling_price: '',
     minimum_stock: '',
     is_active: true,
 };
@@ -63,8 +61,6 @@ export default function Products({ products, units }: Props) {
             sku: p.sku,
             name: p.name,
             unit_id: p.unit ? String(p.unit.id) : '',
-            purchase_price: String(p.purchase_price),
-            selling_price: String(p.selling_price),
             minimum_stock: String(p.minimum_stock),
             is_active: p.is_active,
         });
@@ -76,8 +72,6 @@ export default function Products({ products, units }: Props) {
         const data = {
             ...form,
             unit_id: Number(form.unit_id),
-            purchase_price: Number(form.purchase_price),
-            selling_price: Number(form.selling_price),
             minimum_stock: Number(form.minimum_stock),
         };
         if (editing) {
@@ -94,40 +88,35 @@ export default function Products({ products, units }: Props) {
     }
 
     function toggleActive(p: Product) {
-        router.put(
-            `/products/${p.id}`,
-            { is_active: !p.is_active },
-            { preserveScroll: true },
-        );
+        router.patch(`/products/${p.id}/toggle`, {}, { preserveScroll: true });
     }
 
-    const fmtID = (v: number) => v.toLocaleString('id-ID');
-
+    
     return (
         <>
             <Head title="Master Barang" />
             <div className="mx-auto w-full max-w-[1536px] space-y-6 p-4 md:p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+                        <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
                             Barang
                         </h1>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                             Kelola produk dan stok.
                         </p>
                     </div>
                     <Button
                         onClick={openAdd}
-                        className="bg-[#465fff] text-white hover:bg-[#3b50e0]"
+                        className="bg-brand-500 text-white hover:bg-brand-600"
                     >
                         <Plus className="size-4" /> Tambah
                     </Button>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#1c2434]">
+                <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 text-xs text-slate-500 uppercase dark:bg-white/[0.03]">
+                            <thead className="bg-gray-50 text-xs text-gray-500 uppercase dark:bg-gray-800">
                                 <tr>
                                     {[
                                         'SKU',
@@ -135,8 +124,6 @@ export default function Products({ products, units }: Props) {
                                         'Satuan',
                                         'Stok',
                                         'Min. Stok',
-                                        'Harga Beli',
-                                        'Harga Jual',
                                         'Status',
                                         'Aksi',
                                     ].map((h) => (
@@ -150,30 +137,26 @@ export default function Products({ products, units }: Props) {
                                 {products.map((p) => (
                                     <tr
                                         key={p.id}
-                                        className="border-t border-slate-100 dark:border-white/[0.06]"
+                                        className="border-t border-gray-100 dark:border-gray-800"
                                     >
-                                        <td className="px-5 py-4 font-medium text-slate-900 dark:text-white">
+                                        <td className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">
                                             {p.sku}
                                         </td>
-                                        <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400">
                                             {p.name}
                                         </td>
-                                        <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400">
                                             {p.unit?.name ?? '-'}
                                         </td>
                                         <td
-                                            className={`px-5 py-4 ${p.stock_balance <= p.minimum_stock ? 'text-rose-500' : 'text-slate-600 dark:text-slate-300'}`}
+                                            className={`px-5 py-4 ${(p.stock_balance?.quantity ?? 0) <= p.minimum_stock ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
                                         >
-                                            {fmtID(p.stock_balance)}
+                                            {fmtNum(
+                                                p.stock_balance?.quantity ?? 0,
+                                            )}
                                         </td>
-                                        <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
-                                            {fmtID(p.minimum_stock)}
-                                        </td>
-                                        <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
-                                            {fmtID(p.purchase_price)}
-                                        </td>
-                                        <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
-                                            {fmtID(p.selling_price)}
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400">
+                                            {fmtNum(p.minimum_stock)}
                                         </td>
                                         <td className="px-5 py-4">
                                             <span
@@ -265,52 +248,15 @@ export default function Products({ products, units }: Props) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="purchase_price">
-                                    Harga Beli
-                                </Label>
-                                <Input
-                                    id="purchase_price"
-                                    type="number"
-                                    value={form.purchase_price}
-                                    onChange={(e) =>
-                                        setForm({
-                                            ...form,
-                                            purchase_price: e.target.value,
-                                        })
-                                    }
-                                    required
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="selling_price">
-                                    Harga Jual
-                                </Label>
-                                <Input
-                                    id="selling_price"
-                                    type="number"
-                                    value={form.selling_price}
-                                    onChange={(e) =>
-                                        setForm({
-                                            ...form,
-                                            selling_price: e.target.value,
-                                        })
-                                    }
-                                    required
-                                />
-                            </div>
-                        </div>
                         <div className="grid gap-2">
                             <Label htmlFor="minimum_stock">Min. Stok</Label>
-                            <Input
+                            <NumberInput
                                 id="minimum_stock"
-                                type="number"
                                 value={form.minimum_stock}
-                                onChange={(e) =>
+                                onValueChange={(v) =>
                                     setForm({
                                         ...form,
-                                        minimum_stock: e.target.value,
+                                        minimum_stock: v,
                                     })
                                 }
                                 required
@@ -336,7 +282,7 @@ export default function Products({ products, units }: Props) {
                             </Button>
                             <Button
                                 type="submit"
-                                className="bg-[#465fff] text-white hover:bg-[#3b50e0]"
+                                className="bg-brand-500 text-white hover:bg-brand-600"
                             >
                                 Simpan
                             </Button>

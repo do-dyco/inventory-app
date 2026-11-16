@@ -1,4 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
+import { fmtCurrency, fmtDate, fmtNum } from '@/components/report-filters';
 import {
     ArrowDown,
     ArrowUp,
@@ -13,6 +14,7 @@ type PageProps = {
     role?: string;
     totalActiveProducts?: number;
     totalStock?: number;
+    monthlyProfit?: number;
     totalDistributions?: number;
     totalReturns?: number;
     totalDailyIncomeToday?: number;
@@ -21,7 +23,7 @@ type PageProps = {
         sku: string;
         name: string;
         minimum_stock: number;
-        stockBalance?: { quantity: number };
+        stock_balance?: { quantity: number };
         unit?: { code: string };
     }>;
     recentMovements?: Array<{
@@ -63,6 +65,11 @@ export default function Dashboard() {
         <>
             <Head title="Dashboard" />
             <div className="mx-auto w-full max-w-[1536px] space-y-6 p-4 md:p-6">
+                {!isSuperadmin && <div className={card}>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Laba Bulan Ini</p>
+                    <p className="mt-1 text-2xl font-bold">{fmtCurrency(props.monthlyProfit ?? 0)}</p>
+                    <p className="mt-1 text-xs text-gray-500">Pendapatan dikurangi modal distribusi bersih bulan ini (harga beli master saat ini).</p>
+                </div>}
                 {isSuperadmin ? (
                     <SuperadminDashboard {...props} />
                 ) : (
@@ -77,49 +84,64 @@ function SuperadminDashboard(props: PageProps) {
     const metrics = [
         {
             label: 'Total Produk Aktif',
-            value: props.totalActiveProducts ?? 0,
+            value: fmtNum(props.totalActiveProducts ?? 0),
             icon: Package,
-            color: 'text-[#465fff]',
+            color: 'text-brand-500',
         },
         {
             label: 'Total Stok Gudang',
-            value: props.totalStock ?? 0,
+            value: fmtNum(props.totalStock ?? 0),
             icon: Boxes,
             color: 'text-emerald-500',
         },
         {
             label: 'Total Distribusi',
-            value: props.totalDistributions ?? 0,
+            value: fmtNum(props.totalDistributions ?? 0),
             icon: ShoppingCart,
             color: 'text-amber-500',
         },
         {
-            label: 'Pendapatan Hari Ini',
-            value: `Rp ${(props.totalDailyIncomeToday ?? 0).toLocaleString('id-ID')}`,
+            label: 'Pendapatan Kemarin',
+            value: fmtCurrency(props.totalDailyIncomeToday ?? 0),
             icon: TrendingUp,
             color: 'text-violet-500',
         },
     ];
     return (
         <>
+            {(props.lowStockProducts?.length ?? 0) > 0 && (
+                <div role="status" className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+                    <p className="font-semibold">Stok menipis — segera tambah stok</p>
+                    <ul className="mt-2 list-inside list-disc text-sm">
+                        {props.lowStockProducts!.map((p) => (
+                            <li key={p.id}>{p.name}: tersisa {fmtNum(p.stock_balance?.quantity ?? 0)} {p.unit?.code ?? ''} (minimum {fmtNum(p.minimum_stock)})</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             <div>
-                <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
                     Dashboard Superadmin
                 </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Ringkasan operasional inventory gudang.
                 </p>
+            </div>
+            <div className={card}>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Laba Bulan Ini</p>
+                <p className="mt-1 text-2xl font-bold">{fmtCurrency(props.monthlyProfit ?? 0)}</p>
+                <p className="mt-1 text-xs text-gray-500">Pendapatan dikurangi modal distribusi bersih bulan ini (harga beli master saat ini).</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {metrics.map((m) => (
                     <div key={m.label} className={card}>
-                        <div className="flex size-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10">
+                        <div className="flex size-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
                             <m.icon className={`size-6 ${m.color}`} />
                         </div>
-                        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                             {m.label}
                         </p>
-                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+                        <p className="mt-1 text-2xl font-bold text-gray-800 dark:text-white/90">
                             {m.value}
                         </p>
                     </div>
@@ -129,7 +151,7 @@ function SuperadminDashboard(props: PageProps) {
                 <div className={card}>
                     <div className="flex items-center gap-2">
                         <AlertTriangle className="size-5 text-amber-500" />
-                        <h2 className="font-semibold text-slate-900 dark:text-white">
+                        <h2 className="font-semibold text-gray-800 dark:text-white/90">
                             Peringatan Stok Minimum
                         </h2>
                     </div>
@@ -147,19 +169,21 @@ function SuperadminDashboard(props: PageProps) {
                                 {props.lowStockProducts!.map((p) => (
                                     <tr
                                         key={p.id}
-                                        className="border-t border-slate-100 dark:border-white/[0.06]"
+                                        className="border-t border-gray-100 dark:border-gray-800"
                                     >
-                                        <td className="px-3 py-2 font-medium text-slate-900 dark:text-white">
+                                        <td className="px-3 py-2 font-medium text-gray-800 dark:text-white/90">
                                             {p.sku}
                                         </td>
-                                        <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
+                                        <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
                                             {p.name}
                                         </td>
-                                        <td className="px-3 py-2 text-rose-500">
-                                            {p.stockBalance?.quantity ?? 0}
+                                        <td className="px-3 py-2 text-red-500">
+                                            {fmtNum(
+                                                p.stock_balance?.quantity ?? 0,
+                                            )}
                                         </td>
-                                        <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
-                                            {p.minimum_stock}
+                                        <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
+                                            {fmtNum(p.minimum_stock)}
                                         </td>
                                     </tr>
                                 ))}
@@ -169,7 +193,7 @@ function SuperadminDashboard(props: PageProps) {
                 </div>
             )}
             <div className={card}>
-                <h2 className="font-semibold text-slate-900 dark:text-white">
+                <h2 className="font-semibold text-gray-800 dark:text-white/90">
                     Aktivitas Terbaru
                 </h2>
                 {(props.recentMovements?.length ?? 0) === 0 ? (
@@ -191,16 +215,16 @@ function SuperadminDashboard(props: PageProps) {
                                 {props.recentMovements!.map((m) => (
                                     <tr
                                         key={m.id}
-                                        className="border-t border-slate-100 dark:border-white/[0.06]"
+                                        className="border-t border-gray-100 dark:border-gray-800"
                                     >
-                                        <td className="px-3 py-2 font-medium text-slate-900 dark:text-white">
+                                        <td className="px-3 py-2 font-medium text-gray-800 dark:text-white/90">
                                             {m.product?.name ?? '-'}
                                         </td>
-                                        <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
+                                        <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
                                             {m.movement_type}
                                         </td>
-                                        <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
-                                            {m.quantity}
+                                        <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
+                                            {fmtNum(m.quantity)}
                                         </td>
                                         <td className="px-3 py-2 text-slate-500">
                                             {new Date(
@@ -224,48 +248,48 @@ function UserDashboard(props: PageProps) {
     const metrics = [
         {
             label: 'Total Didistribusikan',
-            value: props.totalDistributed ?? 0,
+            value: fmtNum(props.totalDistributed ?? 0),
             icon: ShoppingCart,
         },
         {
             label: 'Total Dikembalikan',
-            value: props.totalReturned ?? 0,
+            value: fmtNum(props.totalReturned ?? 0),
             icon: ArrowDown,
         },
-        { label: 'Sisa Belum Dikembalikan', value: remaining, icon: ArrowUp },
+        { label: 'Sisa Belum Dikembalikan', value: fmtNum(remaining), icon: ArrowUp },
         {
-            label: 'Pendapatan Hari Ini',
-            value: `Rp ${(props.todayIncome ?? 0).toLocaleString('id-ID')}`,
+            label: 'Pendapatan Kemarin',
+            value: fmtCurrency(props.todayIncome ?? 0),
             icon: TrendingUp,
         },
     ];
     return (
         <>
             <div>
-                <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
                     Dashboard Saya
                 </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Ringkasan barang dan pendapatan Anda.
                 </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {metrics.map((m) => (
                     <div key={m.label} className={card}>
-                        <div className="flex size-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10">
-                            <m.icon className="size-6 text-[#465fff]" />
+                        <div className="flex size-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+                            <m.icon className="size-6 text-brand-500" />
                         </div>
-                        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                             {m.label}
                         </p>
-                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+                        <p className="mt-1 text-2xl font-bold text-gray-800 dark:text-white/90">
                             {m.value}
                         </p>
                     </div>
                 ))}
             </div>
             <div className={card}>
-                <h2 className="font-semibold text-slate-900 dark:text-white">
+                <h2 className="font-semibold text-gray-800 dark:text-white/90">
                     Distribusi dengan Sisa Barang
                 </h2>
                 {(props.myDistributions?.length ?? 0) === 0 ? (
@@ -279,20 +303,22 @@ function UserDashboard(props: PageProps) {
                                 key={d.id}
                                 className="rounded-xl border border-slate-100 p-3 dark:border-white/[0.06]"
                             >
-                                <p className="font-medium text-slate-900 dark:text-white">
+                                <p className="font-medium text-gray-800 dark:text-white/90">
                                     {d.distribution_number} -{' '}
-                                    {d.distribution_date}
+                                    {fmtDate(d.distribution_date, true)}
                                 </p>
                                 {d.items?.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="mt-1 flex justify-between text-sm text-slate-600 dark:text-slate-300"
+                                        className="mt-1 flex justify-between text-sm text-gray-600 dark:text-gray-400"
                                     >
                                         <span>{item.product?.name}</span>
                                         <span>
                                             Sisa:{' '}
-                                            {item.quantity -
-                                                item.returned_quantity}
+                                            {fmtNum(
+                                                item.quantity -
+                                                    item.returned_quantity,
+                                            )}
                                         </span>
                                     </div>
                                 ))}

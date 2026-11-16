@@ -27,7 +27,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'role', 'is_active'])]
+#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'branch_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -72,5 +72,10 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function dailyIncomes(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DailyIncome::class);
+    }
+
+    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 }
