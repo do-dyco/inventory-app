@@ -26,7 +26,7 @@ type PageProps = {
         stock_balance?: { quantity: number };
         unit?: { code: string };
     }>;
-    branchProfits?: Array<{ name: string; profit: number }>;
+    branchProfits?: Array<{ name: string; monthly: number; yesterday: number }>;
     recentMovements?: Array<{
         id: number;
         movement_type: string;
@@ -136,11 +136,21 @@ function SuperadminDashboard(props: PageProps) {
                 </div>
                 {props.branchProfits?.map((b) => (
                     <div key={b.name} className={card}>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{b.name}</p>
-                        <p className={`mt-1 text-2xl font-bold ${b.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                            {fmtCurrency(b.profit)}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-500">Laba bulan ini</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">{b.name}</p>
+                        <div className="mt-2 flex gap-4">
+                            <div>
+                                <p className="text-xs text-gray-500">Bulan Ini</p>
+                                <p className={`text-lg font-bold ${b.monthly >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                    {fmtCurrency(b.monthly)}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500">Kemarin</p>
+                                <p className={`text-lg font-bold ${b.yesterday >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                    {fmtCurrency(b.yesterday)}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 ))}
             </div>

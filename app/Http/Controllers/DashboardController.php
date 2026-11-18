@@ -60,7 +60,8 @@ class DashboardController extends Controller
 
         $branchProfits = Branch::where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($b) => [
             'name' => $b->name,
-            'profit' => $this->branchProfit($b->id),
+            'monthly' => $this->branchProfit($b->id, 'month'),
+            'yesterday' => $this->branchProfit($b->id, 'yesterday'),
         ])->values()->all();
 
         return [
@@ -77,8 +78,19 @@ class DashboardController extends Controller
         ];
     }
 
-    private function branchProfit(int $branchId): float
+    private function branchProfit(int $branchId, string $range = 'month'): float
     {
+        if ($range === 'yesterday') {
+            $day = today()->subDay()->toDateString();
+            $revenue = (float) DailyIncome::where('branch_id', $branchId)->whereDate('income_date', $day)->sum('amount');
+            $capital = (float) StockDistribution::where('status', 'POSTED')->whereDate('distribution_date', $day)
+                ->whereHas('user', fn ($q) => $q->where('branch_id', $branchId))
+                ->with('items.product')->get()->sum(fn ($d) => $d->items->sum(
+                    fn ($item) => ($item->quantity - $item->returned_quantity) * (float) ($item->product?->purchase_price ?? 0),
+                ));
+            return $revenue - $capital;
+        }
+
         $dates = [today()->startOfMonth()->toDateString(), today()->endOfMonth()->toDateString()];
         $revenue = (float) DailyIncome::where('branch_id', $branchId)->whereBetween('income_date', $dates)->sum('amount');
         $capital = (float) StockDistribution::where('status', 'POSTED')->whereBetween('distribution_date', $dates)
