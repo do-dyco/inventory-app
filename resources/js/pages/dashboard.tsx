@@ -137,14 +137,14 @@ function SuperadminDashboard(props: PageProps) {
                 {props.branchProfits?.map((b) => (
                     <div key={b.name} className={card}>
                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">{b.name}</p>
-                        <div className="mt-2 flex gap-4">
-                            <div>
+                        <div className="mt-3 space-y-3">
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-gray-800">
                                 <p className="text-xs text-gray-500">Bulan Ini</p>
                                 <p className={`text-lg font-bold ${b.monthly >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                     {fmtCurrency(b.monthly)}
                                 </p>
                             </div>
-                            <div>
+                            <div className="flex items-center justify-between">
                                 <p className="text-xs text-gray-500">Kemarin</p>
                                 <p className={`text-lg font-bold ${b.yesterday >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                     {fmtCurrency(b.yesterday)}
