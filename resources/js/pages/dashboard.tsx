@@ -128,40 +128,22 @@ function SuperadminDashboard(props: PageProps) {
                     Ringkasan operasional inventory gudang.
                 </p>
             </div>
-            <div className={card}>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Laba Bulan Ini</p>
-                <p className="mt-1 text-2xl font-bold">{fmtCurrency(props.monthlyProfit ?? 0)}</p>
-                <p className="mt-1 text-xs text-gray-500">Pendapatan dikurangi modal distribusi bersih bulan ini (harga beli master saat ini).</p>
-            </div>
-            {(props.branchProfits?.length ?? 0) > 0 && (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div className={card}>
-                    <h2 className="font-semibold text-gray-800 dark:text-white/90">
-                        Laba Per Cabang
-                    </h2>
-                    <div className="mt-4 overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="text-xs text-slate-500 uppercase">
-                                <tr>
-                                    <th className="px-3 py-2">Cabang</th>
-                                    <th className="px-3 py-2">Laba Bulan Ini</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {props.branchProfits!.map((b) => (
-                                    <tr key={b.name} className="border-t border-gray-100 dark:border-gray-800">
-                                        <td className="px-3 py-2 font-medium text-gray-800 dark:text-white/90">
-                                            {b.name}
-                                        </td>
-                                        <td className={`px-3 py-2 font-medium ${b.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                                            {fmtCurrency(b.profit)}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Laba Total Bulan Ini</p>
+                    <p className="mt-1 text-2xl font-bold">{fmtCurrency(props.monthlyProfit ?? 0)}</p>
+                    <p className="mt-1 text-xs text-gray-500">Pendapatan dikurangi modal distribusi bersih.</p>
                 </div>
-            )}
+                {props.branchProfits?.map((b) => (
+                    <div key={b.name} className={card}>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{b.name}</p>
+                        <p className={`mt-1 text-2xl font-bold ${b.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                            {fmtCurrency(b.profit)}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">Laba bulan ini</p>
+                    </div>
+                ))}
+            </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {metrics.map((m) => (
                     <div key={m.label} className={card}>
