@@ -22,7 +22,7 @@ class DashboardController extends Controller
             return Inertia::render('dashboard', $this->superadminData());
         }
 
-        return Inertia::render('dashboard', $this->userData($user));
+        return redirect()->route('pendapatan.index');
     }
 
     private function monthlyProfit(?int $userId = null): float

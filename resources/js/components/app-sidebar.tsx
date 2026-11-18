@@ -123,6 +123,7 @@ export function AppSidebar() {
             <SidebarContent className="bg-white px-3 py-5 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
                 <SidebarGroup>
                     <SidebarMenu className="gap-1">
+                        {isSuperadmin && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -135,6 +136,7 @@ export function AppSidebar() {
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                        )}
                     </SidebarMenu>
                 </SidebarGroup>
                 {isSuperadmin && (
