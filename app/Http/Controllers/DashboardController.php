@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\DailyIncome;
 use App\Models\Product;
 use App\Models\StockBalance;
@@ -57,17 +58,35 @@ class DashboardController extends Controller
             ->limit(10)
             ->get(['id', 'product_id', 'movement_type', 'quantity', 'created_at']);
 
+        $branchProfits = Branch::where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($b) => [
+            'name' => $b->name,
+            'profit' => $this->branchProfit($b->id),
+        ])->values()->all();
+
         return [
             'role' => 'superadmin',
             'totalActiveProducts' => $totalActiveProducts,
             'totalStock' => $totalStock,
             'monthlyProfit' => $this->monthlyProfit(),
+            'branchProfits' => $branchProfits,
             'totalDistributions' => $totalDistributions,
             'totalReturns' => $totalReturns,
             'totalDailyIncomeToday' => $totalDailyIncomeToday,
             'lowStockProducts' => $lowStockProducts,
             'recentMovements' => $recentMovements,
         ];
+    }
+
+    private function branchProfit(int $branchId): float
+    {
+        $dates = [today()->startOfMonth()->toDateString(), today()->endOfMonth()->toDateString()];
+        $revenue = (float) DailyIncome::where('branch_id', $branchId)->whereBetween('income_date', $dates)->sum('amount');
+        $capital = (float) StockDistribution::where('status', 'POSTED')->whereBetween('distribution_date', $dates)
+            ->whereHas('user', fn ($q) => $q->where('branch_id', $branchId))
+            ->with('items.product')->get()->sum(fn ($d) => $d->items->sum(
+                fn ($item) => ($item->quantity - $item->returned_quantity) * (float) ($item->product?->purchase_price ?? 0),
+            ));
+        return $revenue - $capital;
     }
 
     private function userData($user): array
