@@ -497,7 +497,7 @@ export default function Pendapatan({ incomes, expenses, menuItems, users }: Prop
                                     <div key={i} className="flex gap-2">
                                         <Input
                                             className="w-28"
-                                            placeholder="Kode"
+                                            placeholder="Nama"
                                             value={e.code}
                                             onChange={(ev) => {
                                                 const next = [...expItems];
