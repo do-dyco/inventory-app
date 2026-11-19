@@ -93,7 +93,7 @@ class StockReturnController extends Controller
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.stock_distribution_item_id' => ['required', 'exists:stock_distribution_items,id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.quantity' => ['required', 'integer', 'min:0'],
         ]);
 
         $user = $request->user();
