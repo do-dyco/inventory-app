@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\DailyExpense;
 use App\Models\DailyIncome;
 use App\Models\Product;
 use App\Models\StockBalance;
@@ -37,7 +38,15 @@ class DashboardController extends Controller
             ->with('items.product')->get()->sum(fn ($d) => $d->items->sum(
                 fn ($item) => ($item->quantity - $item->returned_quantity) * (float) ($item->product?->purchase_price ?? 0),
             ));
-        return (float) $revenue - $capital;
+        return (float) $revenue - $capital - $this->expenseTotal($dates, $userId);
+    }
+
+    private function expenseTotal(array $dates, ?int $userId = null, ?int $branchId = null): float
+    {
+        return (float) DailyExpense::whereBetween('expense_date', $dates)
+            ->when($userId !== null, fn ($q) => $q->where('user_id', $userId))
+            ->when($branchId !== null, fn ($q) => $q->where('branch_id', $branchId))
+            ->sum('amount');
     }
 
     private function superadminData(): array
@@ -88,7 +97,8 @@ class DashboardController extends Controller
                 ->with('items.product')->get()->sum(fn ($d) => $d->items->sum(
                     fn ($item) => ($item->quantity - $item->returned_quantity) * (float) ($item->product?->purchase_price ?? 0),
                 ));
-            return $revenue - $capital;
+            $expenses = (float) DailyExpense::where('branch_id', $branchId)->whereDate('expense_date', $day)->sum('amount');
+            return $revenue - $capital - $expenses;
         }
 
         $dates = [today()->startOfMonth()->toDateString(), today()->endOfMonth()->toDateString()];
@@ -98,7 +108,8 @@ class DashboardController extends Controller
             ->with('items.product')->get()->sum(fn ($d) => $d->items->sum(
                 fn ($item) => ($item->quantity - $item->returned_quantity) * (float) ($item->product?->purchase_price ?? 0),
             ));
-        return $revenue - $capital;
+        $expenses = $this->expenseTotal($dates, null, $branchId);
+        return $revenue - $capital - $expenses;
     }
 
     private function userData($user): array

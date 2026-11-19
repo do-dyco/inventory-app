@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DailyExpense;
 use App\Models\DailyIncome;
 use App\Models\MenuItem;
 use App\Models\User;
@@ -20,8 +21,14 @@ class DailyIncomeController extends Controller
 
         $menuItems = MenuItem::where('is_active', true)->orderBy('name')->get();
 
+        $expenses = DailyExpense::with(['user', 'branch'])->latest();
+        if (!$request->user()->isSuperadmin()) {
+            $expenses->where('user_id', $request->user()->id);
+        }
+
         return Inertia::render('pendapatan/index', [
             'incomes' => $query->paginate(15),
+            'expenses' => $expenses->paginate(15),
             'menuItems' => $menuItems,
             'users' => $request->user()->isSuperadmin()
                 ? User::where('role', 'user')->where('is_active', true)->with('branch:id,name')->orderBy('name')->get(['id', 'name', 'branch_id'])
@@ -70,6 +77,10 @@ class DailyIncomeController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.menu_item_id' => ['required', 'integer', 'exists:menu_items,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'expenses' => ['nullable', 'array'],
+            'expenses.*.code' => ['required', 'string', 'max:50'],
+            'expenses.*.description' => ['nullable', 'string'],
+            'expenses.*.amount' => ['required', 'numeric', 'min:0'],
             'user_id' => $request->user()->isSuperadmin()
                 ? ['required', 'integer', 'exists:users,id']
                 : ['nullable', 'integer', 'exists:users,id'],
@@ -91,6 +102,18 @@ class DailyIncomeController extends Controller
                     'payment_method' => $validated['payment_method'] ?? null,
                     'user_id' => $owner->id,
                     'branch_id' => $owner->branch_id,
+                ]);
+            }
+
+            foreach ($validated['expenses'] ?? [] as $exp) {
+                DailyExpense::create([
+                    'expense_date' => $validated['income_date'],
+                    'user_id' => $owner->id,
+                    'branch_id' => $owner->branch_id,
+                    'code' => $exp['code'],
+                    'description' => $exp['description'] ?? null,
+                    'amount' => $exp['amount'],
+                    'payment_method' => $validated['payment_method'] ?? null,
                 ]);
             }
         });

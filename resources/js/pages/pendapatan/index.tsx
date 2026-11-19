@@ -35,8 +35,19 @@ type Income = {
     quantity?: number | null;
 };
 
+type Expense = {
+    id: number;
+    expense_date: string;
+    code: string;
+    description: string | null;
+    amount: number;
+    user: { name: string } | null;
+    branch?: { name: string } | null;
+};
+
 type Props = {
     incomes: { data: Income[] };
+    expenses: { data: Expense[] };
     menuItems: MenuItem[];
     users?: { id: number; name: string; branch?: { name: string } | null }[] | null;
 };
@@ -55,7 +66,7 @@ const emptyBatch = { user_id: '', income_date: '', payment_method: 'cash' };
 const tableWrap =
     'overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900';
 
-export default function Pendapatan({ incomes, menuItems, users }: Props) {
+export default function Pendapatan({ incomes, expenses, menuItems, users }: Props) {
     const { auth } = usePage().props;
     const userBranchId = (auth.user as { branch_id?: number | null }).branch_id;
     const isSuperadmin = !!users;
@@ -64,6 +75,7 @@ export default function Pendapatan({ incomes, menuItems, users }: Props) {
     const [form, setForm] = useState(empty);
     const [batch, setBatch] = useState(emptyBatch);
     const [qtys, setQtys] = useState<Record<number, string>>({});
+    const [expItems, setExpItems] = useState<{ code: string; description: string; amount: string }[]>([]);
 
     const selectedMenu = menuItems.find(
         (m) => String(m.id) === form.menu_item_id,
@@ -81,6 +93,7 @@ export default function Pendapatan({ incomes, menuItems, users }: Props) {
             income_date: new Date().toISOString().slice(0, 10),
         });
         setQtys({});
+        setExpItems([]);
         setOpen(true);
     }
 
@@ -137,6 +150,11 @@ export default function Pendapatan({ incomes, menuItems, users }: Props) {
                 income_date: batch.income_date,
                 payment_method: batch.payment_method,
                 items,
+                expenses: expItems.filter((e) => e.code && Number(e.amount) > 0).map((e) => ({
+                    code: e.code,
+                    description: e.description || null,
+                    amount: Number(e.amount),
+                })),
                 ...(isSuperadmin ? { user_id: Number(batch.user_id) } : {}),
             },
             {
@@ -255,6 +273,49 @@ export default function Pendapatan({ incomes, menuItems, users }: Props) {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 className="mb-3 text-lg font-semibold text-gray-800 dark:text-white/90">
+                        Pengeluaran
+                    </h2>
+                    <div className={tableWrap}>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50 text-xs text-gray-500 uppercase dark:bg-gray-800">
+                                    <tr>
+                                        {['Tanggal', 'Kode', 'Deskripsi', 'Jumlah', 'Cabang', 'Pencatat'].map((h) => (
+                                            <th key={h} className="px-5 py-3">{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {expenses.data.map((e) => (
+                                        <tr key={e.id} className="border-t border-gray-100 dark:border-gray-800">
+                                            <td className="px-5 py-4 font-medium text-gray-800 dark:text-white/90">
+                                                {fmtDate(e.expense_date)}
+                                            </td>
+                                            <td className="px-5 py-4 text-gray-600 dark:text-gray-400">
+                                                {e.code}
+                                            </td>
+                                            <td className="px-5 py-4 text-gray-600 dark:text-gray-400">
+                                                {e.description ?? '-'}
+                                            </td>
+                                            <td className="px-5 py-4 text-rose-600 dark:text-rose-400">
+                                                {fmtCurrency(e.amount)}
+                                            </td>
+                                            <td className="px-5 py-4 text-gray-600 dark:text-gray-400">
+                                                {e.branch?.name ?? '-'}
+                                            </td>
+                                            <td className="px-5 py-4 text-gray-600 dark:text-gray-400">
+                                                {e.user?.name ?? '-'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -429,6 +490,66 @@ export default function Pendapatan({ incomes, menuItems, users }: Props) {
                                 </span>
                             </p>
                         )}
+                        <div className="grid gap-2">
+                            <Label>Pengeluaran</Label>
+                            <div className="space-y-2">
+                                {expItems.map((e, i) => (
+                                    <div key={i} className="flex gap-2">
+                                        <Input
+                                            className="w-28"
+                                            placeholder="Kode"
+                                            value={e.code}
+                                            onChange={(ev) => {
+                                                const next = [...expItems];
+                                                next[i].code = ev.target.value;
+                                                setExpItems(next);
+                                            }}
+                                        />
+                                        <Input
+                                            className="flex-1"
+                                            placeholder="Deskripsi"
+                                            value={e.description}
+                                            onChange={(ev) => {
+                                                const next = [...expItems];
+                                                next[i].description = ev.target.value;
+                                                setExpItems(next);
+                                            }}
+                                        />
+                                        <NumberInput
+                                            className="w-32"
+                                            placeholder="0"
+                                            value={e.amount}
+                                            onValueChange={(v) => {
+                                                const next = [...expItems];
+                                                next[i].amount = v;
+                                                setExpItems(next);
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setExpItems(expItems.filter((_, idx) => idx !== i))}
+                                        >
+                                            <Trash2 className="size-4 text-red-500" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setExpItems([...expItems, { code: '', description: '', amount: '' }])}
+                                >
+                                    <Plus className="size-4" /> Tambah Pengeluaran
+                                </Button>
+                            </div>
+                            {expItems.some((e) => e.code && Number(e.amount) > 0) && (
+                                <p className="text-xs text-rose-500">
+                                    Total Pengeluaran: {fmtCurrency(expItems.reduce((s, e) => s + (Number(e.amount) || 0), 0))}
+                                </p>
+                            )}
+                        </div>
                         </>
                         )}
                         <div className="grid gap-2">
