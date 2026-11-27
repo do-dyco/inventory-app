@@ -1,6 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { fmtCurrency, fmtDate, fmtNum } from '@/components/report-filters';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,11 +25,15 @@ type Product = {
     id: number;
     sku: string;
     name: string;
+    unit_id: number;
     unit: { code: string } | null;
     stock_balance: { quantity: number } | null;
     minimum_stock: number;
     purchase_price: number | null;
+    selling_price: number | null;
 };
+
+type Unit = { id: number; code: string; name: string };
 
 type Movement = {
     id: number;
@@ -42,6 +46,7 @@ type Movement = {
 type Props = {
     products: Product[];
     movements: Movement[];
+    units: Unit[];
 };
 
 const card =
@@ -50,8 +55,10 @@ const card =
 const tableWrap =
     'overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900';
 
-export default function Stok({ products, movements }: Props) {
+export default function Stok({ products, movements, units }: Props) {
     const [open, setOpen] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
+    const [editProduct, setEditProduct] = useState<Product | null>(null);
     type Item = {
         product_id: string;
         quantity: string;
@@ -131,6 +138,42 @@ export default function Stok({ products, movements }: Props) {
         return { label: 'Aman', cls: 'bg-emerald-100 text-emerald-700' };
     }
 
+    const editForm = useForm({
+        name: '',
+        unit_id: '',
+        purchase_price: '',
+        selling_price: '',
+        minimum_stock: '',
+    });
+
+    function openEdit(p: Product) {
+        setEditProduct(p);
+        editForm.setData({
+            name: p.name,
+            unit_id: String(p.unit_id),
+            purchase_price: p.purchase_price != null ? String(p.purchase_price) : '',
+            selling_price: p.selling_price != null ? String(p.selling_price) : '',
+            minimum_stock: String(p.minimum_stock),
+        });
+        setEditOpen(true);
+    }
+
+    function submitEdit(e: React.FormEvent) {
+        e.preventDefault();
+        if (!editProduct) return;
+        router.put(`/products/${editProduct.id}`, {
+            name: editForm.data.name,
+            unit_id: Number(editForm.data.unit_id),
+            purchase_price: editForm.data.purchase_price === '' ? null : Number(editForm.data.purchase_price),
+            selling_price: editForm.data.selling_price === '' ? null : Number(editForm.data.selling_price),
+            minimum_stock: Number(editForm.data.minimum_stock),
+            is_active: true,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => setEditOpen(false),
+        });
+    }
+
     return (
         <>
             <Head title="Gudang Stok" />
@@ -165,6 +208,7 @@ export default function Stok({ products, movements }: Props) {
                                         'Min. Stok',
                                         'Harga Beli',
                                         'Status',
+                                        'Aksi',
                                     ].map((h) => (
                                         <th key={h} className="px-5 py-3">
                                             {h}
@@ -209,6 +253,16 @@ export default function Stok({ products, movements }: Props) {
                                                 >
                                                     {s.label}
                                                 </span>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => openEdit(p)}
+                                                >
+                                                    <Pencil className="size-4 text-brand-500" />
+                                                </Button>
                                             </td>
                                         </tr>
                                     );
@@ -395,6 +449,89 @@ export default function Stok({ products, movements }: Props) {
                                 type="submit"
                                 className="bg-brand-500 text-white hover:bg-brand-600"
                                 disabled={form.processing}
+                            >
+                                Simpan
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Edit Barang — {editProduct?.sku}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={submitEdit} className="grid gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-name">Nama</Label>
+                            <Input
+                                id="edit-name"
+                                value={editForm.data.name}
+                                onChange={(e) => editForm.setData('name', e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Satuan</Label>
+                            <Select
+                                value={editForm.data.unit_id}
+                                onValueChange={(v) => editForm.setData('unit_id', v)}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Pilih satuan" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {units.map((u) => (
+                                        <SelectItem key={u.id} value={String(u.id)}>
+                                            {u.code} — {u.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-pp">Harga Beli</Label>
+                                <NumberInput
+                                    id="edit-pp"
+                                    value={editForm.data.purchase_price}
+                                    onValueChange={(v) => editForm.setData('purchase_price', v)}
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-sp">Harga Jual</Label>
+                                <NumberInput
+                                    id="edit-sp"
+                                    value={editForm.data.selling_price}
+                                    onValueChange={(v) => editForm.setData('selling_price', v)}
+                                    placeholder="0"
+                                />
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-min">Min. Stok</Label>
+                            <NumberInput
+                                id="edit-min"
+                                value={editForm.data.minimum_stock}
+                                onValueChange={(v) => editForm.setData('minimum_stock', v)}
+                                required
+                                placeholder="0"
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setEditOpen(false)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-brand-500 text-white hover:bg-brand-600"
+                                disabled={editForm.processing}
                             >
                                 Simpan
                             </Button>

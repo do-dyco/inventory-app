@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\StockBalance;
 use App\Models\StockMovement;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -25,6 +26,7 @@ class StockController extends Controller
         return Inertia::render('gudang/stok', [
             'products' => $products,
             'movements' => $movements,
+            'units' => Unit::where('is_active', true)->get(),
         ]);
     }
 
