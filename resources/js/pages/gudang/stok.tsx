@@ -142,7 +142,6 @@ export default function Stok({ products, movements, units }: Props) {
         name: '',
         unit_id: '',
         purchase_price: '',
-        selling_price: '',
         minimum_stock: '',
     });
 
@@ -152,7 +151,6 @@ export default function Stok({ products, movements, units }: Props) {
             name: p.name,
             unit_id: String(p.unit_id),
             purchase_price: p.purchase_price != null ? String(p.purchase_price) : '',
-            selling_price: p.selling_price != null ? String(p.selling_price) : '',
             minimum_stock: String(p.minimum_stock),
         });
         setEditOpen(true);
@@ -165,7 +163,6 @@ export default function Stok({ products, movements, units }: Props) {
             name: editForm.data.name,
             unit_id: Number(editForm.data.unit_id),
             purchase_price: editForm.data.purchase_price === '' ? null : Number(editForm.data.purchase_price),
-            selling_price: editForm.data.selling_price === '' ? null : Number(editForm.data.selling_price),
             minimum_stock: Number(editForm.data.minimum_stock),
             is_active: true,
         }, {
@@ -490,25 +487,14 @@ export default function Stok({ products, movements, units }: Props) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-pp">Harga Beli</Label>
-                                <NumberInput
-                                    id="edit-pp"
-                                    value={editForm.data.purchase_price}
-                                    onValueChange={(v) => editForm.setData('purchase_price', v)}
-                                    placeholder="0"
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="edit-sp">Harga Jual</Label>
-                                <NumberInput
-                                    id="edit-sp"
-                                    value={editForm.data.selling_price}
-                                    onValueChange={(v) => editForm.setData('selling_price', v)}
-                                    placeholder="0"
-                                />
-                            </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-pp">Harga Beli</Label>
+                            <NumberInput
+                                id="edit-pp"
+                                value={editForm.data.purchase_price}
+                                onValueChange={(v) => editForm.setData('purchase_price', v)}
+                                placeholder="0"
+                            />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-min">Min. Stok</Label>
